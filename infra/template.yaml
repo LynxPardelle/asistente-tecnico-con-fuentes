@@ -1,0 +1,157 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Base de Asistente Técnico con Fuentes
+
+Parameters:
+  Stage:
+    Type: String
+    Default: development
+    AllowedValues:
+      - development
+      - testing
+      - production
+
+Resources:
+  HealthApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: '$default'
+      AccessLogSettings:
+        DestinationArn: !GetAtt ApiLogGroup.Arn
+        Format: '{"requestId":"$context.requestId","routeKey":"$context.routeKey","status":"$context.status","latency":"$context.responseLatency"}'
+      Tags:
+        Product: asistente-tecnico-con-fuentes
+        Stage: !Ref Stage
+
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+
+  HealthLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 14
+
+  HealthExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: HealthLogs
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !GetAtt HealthLogGroup.Arn
+
+  HealthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ../services/health/
+      Handler: index.handler
+      Runtime: nodejs24.x
+      Architectures:
+        - arm64
+      MemorySize: 128
+      Timeout: 3
+      Role: !GetAtt HealthExecutionRole.Arn
+      LoggingConfig:
+        LogGroup: !Ref HealthLogGroup
+      Environment:
+        Variables:
+          STAGE: !Ref Stage
+          PRODUCT_SLUG: asistente-tecnico-con-fuentes
+      Events:
+        Health:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HealthApi
+            Path: /api/health
+            Method: GET
+      Tags:
+        Product: asistente-tecnico-con-fuentes
+        Stage: !Ref Stage
+
+  KnowledgeTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      SSESpecification:
+        SSEEnabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Product
+          Value: asistente-tecnico-con-fuentes
+        - Key: Stage
+          Value: !Ref Stage
+
+  SourcesBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: Product
+          Value: asistente-tecnico-con-fuentes
+        - Key: Stage
+          Value: !Ref Stage
+
+  SourcesBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SourcesBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: RequireTLS
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource:
+              - !GetAtt SourcesBucket.Arn
+              - !Sub '${SourcesBucket.Arn}/*'
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+Outputs:
+  HealthUrl:
+    Description: Comprobación pública del proceso
+    Value: !Sub 'https://${HealthApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/api/health'

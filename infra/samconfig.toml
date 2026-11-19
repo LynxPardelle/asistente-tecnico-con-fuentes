@@ -1,0 +1,28 @@
+version = 0.1
+
+[development.global.parameters]
+stack_name = "asistente-tecnico-con-fuentes-development"
+
+[development.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+resolve_s3 = true
+confirm_changeset = true
+parameter_overrides = "Stage=development"
+
+[testing.global.parameters]
+stack_name = "asistente-tecnico-con-fuentes-testing"
+
+[testing.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+resolve_s3 = true
+confirm_changeset = true
+parameter_overrides = "Stage=testing"
+
+[production.global.parameters]
+stack_name = "asistente-tecnico-con-fuentes-production"
+
+[production.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+resolve_s3 = true
+confirm_changeset = true
+parameter_overrides = "Stage=production"

@@ -1,0 +1,20 @@
+flowchart LR
+    User["Usuario autorizado"] --> Web["Angular 22<br/>NgRx SignalStore"]
+    Web -->|"Actual GET /api/health"| Api["HTTP API"]
+    Api --> Health["Lambda de salud"]
+    Health --> Logs["CloudWatch<br/>14 días"]
+
+    Web -. "Fase 2 identidad y carga" .-> Auth["OIDC y autorización<br/>organización y base"]
+    Auth -.-> Sources[("S3 privado y versionado")]
+    Sources -. "Evento futuro de original" .-> Queue["SQS ingesta"]
+    Queue -.-> Worker["Lambda de extracción<br/>idempotencia por versión"]
+    Queue -. "Tras 5 intentos" .-> DLQ["DLQ"]
+    Worker -. "Fragmentos e índice inmutables" .-> Sources
+    Worker -. "Estado y revisión" .-> Table[("DynamoDB bajo demanda")]
+
+    Web -. "Fase 3 consulta" .-> Answer["Lambda de consulta"]
+    Answer -. "Permisos revisión y reserva" .-> Table
+    Answer -. "Recuperación acotada" .-> Sources
+    Answer -. "Fase 4 contexto como datos" .-> Model["Modelo por solicitud"]
+    Model -. "Afirmaciones y citas" .-> Validator["Dominio puro<br/>procedencia y abstención"]
+    Validator -. "Respuesta validada" .-> Web
