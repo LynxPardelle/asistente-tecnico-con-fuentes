@@ -1,0 +1,35 @@
+{
+  "verifiedAt": "2026-11-19",
+  "automaticCi": {
+    "name": "asistente-tecnico-con-fuentes",
+    "runId": 44615646978,
+    "url": "https://github.com/LynxPardelle/asistente-tecnico-con-fuentes/actions/runs/44615646978",
+    "sha": "f8d472737835d63016d335ba7086a8910a5f2e3d",
+    "event": "push",
+    "conclusion": "success"
+  },
+  "rejectedDirectPromotion": {
+    "repo": "asistente-tecnico-con-fuentes",
+    "pr": 1,
+    "prUrl": "https://github.com/LynxPardelle/asistente-tecnico-con-fuentes/pull/1",
+    "headSha": "f8d472737835d63016d335ba7086a8910a5f2e3d",
+    "checkName": "zoo/promotion/production",
+    "appId": 15368,
+    "checkUrl": "https://github.com/LynxPardelle/asistente-tecnico-con-fuentes/actions/runs/44615865257/job/135884250288",
+    "checkId": 135884250288,
+    "conclusion": "failure",
+    "blocked": true,
+    "mergeStateStatus": "BLOCKED",
+    "state": "closed",
+    "merged": false,
+    "closedHeadSha": "f8d472737835d63016d335ba7086a8910a5f2e3d",
+    "observedAt": "2026-11-19T21:09:52.8478813Z",
+    "error": null,
+    "runUrl": "https://github.com/LynxPardelle/asistente-tecnico-con-fuentes/actions/runs/44615865257",
+    "event": "pull_request_target"
+  },
+  "requiredAppId": 15368,
+  "protectionsChanged": false,
+  "temporaryProbeRemoved": true,
+  "positivePromotionEvidence": "GitHub pull request history: development -> testing -> main"
+}
